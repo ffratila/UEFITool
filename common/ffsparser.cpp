@@ -1023,6 +1023,11 @@ USTATUS FfsParser::parseVolumeHeader(const UByteArray & volume, const UINT32 loc
         msg(usprintf("%s: volume header overlaps the end of data", __FUNCTION__));
         return U_INVALID_VOLUME;
     }
+    else if ((UINT32)ALIGN8(volumeHeader->HeaderLength) < sizeof(EFI_FIRMWARE_VOLUME_HEADER)) {
+        msg(usprintf("%s: invalid volume header length", __FUNCTION__));
+        return U_INVALID_VOLUME;
+    }
+    
     // Check sanity of ExtHeaderOffset value
     if (volumeHeader->Revision > 1 && volumeHeader->ExtHeaderOffset
         && (UINT32)ALIGN8(volumeHeader->ExtHeaderOffset + sizeof(EFI_FIRMWARE_VOLUME_EXT_HEADER)) > (UINT32)volume.size()) {
@@ -1074,6 +1079,12 @@ USTATUS FfsParser::parseVolumeHeader(const UByteArray & volume, const UINT32 loc
         isUnknown = false;
         isMicrocodeVolume = true;
         headerSize = EFI_APPLE_MICROCODE_VOLUME_HEADER_SIZE;
+    }
+    
+    // Check sanity of headerSize
+    if ((UINT32)volume.size() < headerSize) {
+        msg(usprintf("%s: volume header overlaps the end of data", __FUNCTION__));
+        return U_INVALID_VOLUME;
     }
     
     // Check volume revision and alignment
